@@ -1,0 +1,8 @@
+Problem 4 & 5:
+Fixed rate Gradient Descent
+Ein = 0.197
+Eout = 0.22
+
+Stochatist Gradient Descent
+Ein = 0.464
+Eout = 0.473
