@@ -1,60 +1,53 @@
-import math
+# Thanks to Mama and Piepie, who brought me into the world of Python
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 def readData(filename):
-    X, Y = list(), list()
-    with open(filename, 'r') as file:
-        for line in file:
-            data = line.split()
-            X.append(np.array([1] + [float(x) for x in data[:-1]]))
-            Y.append(int(data[-1]))
+    data = np.loadtxt(filename)
+    r, c = data.shape
+    X = np.concatenate((np.ones((r, 1)), data[:, : -1]), axis = 1)
+    Y = data[:, -1:]
     return X, Y
-
-def sign(x):
-    return 1 if x >= 0 else -1
 
 def Theta(s):
     return 1 / (1 + np.exp(-s))
 
 def GradientEin(w, X, Y):
-    return sum(Theta(-Y[n] * np.dot(w, X[n])) * (-Y[n] * X[n]) for n in range(len(X))) / len(X)
+    theta = Theta(-Y * np.dot(X, w))
+    return -1 * (Y * X).T.dot(theta) / X.shape[0]
 
 def ErrZeroOne(w, X, Y):
-    return sum(0 if sign(np.dot(w, X[i])) == Y[i] else 1 for i in range(len(X))) / len(X)
-
-def Err01(w, X, Y):
-    return sum(0 if sign(np.dot(w, x)) == y else 1 for i in range(len(X))) / len(X)
-    return sum(0 if .... for x, y in zip(X, Y))
+    return np.sum(np.sign(np.dot(X, w)) != Y) / X.shape[0]
 
 T = 2000 
-ita_FGD = 0.01
-ita_SGD = 0.001
+eta_FGD = 0.01
+eta_SGD = 0.001
 
 trainX, trainY = readData('hw3_train.dat')
-testX, testY = readData('hw3_test.dat')
+testX,  testY  = readData('hw3_test.dat')
 
 D = len(trainX[0])
 
-w_FGD = np.array([0] * D)
-w_SGD = np.array([0] * D)
+w_FGD = np.zeros((D, 1))
+w_SGD = np.zeros((D, 1))
 
-Ein_FGD = list()
-Ein_SGD = list()
-Eout_FGD = list()
-Eout_SGD = list()
+Ein_FGD = np.zeros(T)
+Ein_SGD = np.zeros(T)
+Eout_FGD = np.zeros(T)
+Eout_SGD = np.zeros(T)
 
 for t in range(T):
     # Fixed rate Gradient Descent
-    w_FGD = w_FGD - ita_FGD * GradientEin(w_FGD, trainX, trainY)
-    Ein_FGD.append(ErrZeroOne(w_FGD, trainX, trainY))
-    Eout_FGD.append(ErrZeroOne(w_FGD, testX, testY))
+    w_FGD = w_FGD - eta_FGD * GradientEin(w_FGD, trainX, trainY)
+    Ein_FGD[t]  = ErrZeroOne(w_FGD, trainX, trainY)
+    Eout_FGD[t] = ErrZeroOne(w_FGD, testX,  testY)
 
     # Stochatist Gradient Descent
-    x, y = trainX[t % len(trainX)], trainY[t % len(trainX)]
-    w_SGD = w_SGD - ita_SGD * Theta(-y * np.dot(w_SGD, x)) * (-y * x)
-    Ein_SGD.append(ErrZeroOne(w_SGD, trainX, trainY))
-    Eout_SGD.append(ErrZeroOne(w_SGD, testX, testY))
+    x, y = np.array(trainX[t % trainX.shape[0]]).reshape(-1, 1), trainY[t % trainX.shape[0]]
+    w_SGD = w_SGD - eta_SGD * Theta(-y * np.dot(x.T, w_SGD)) * (-y * x)
+    Ein_SGD[t]  = ErrZeroOne(w_SGD, trainX, trainY)
+    Eout_SGD[t] = ErrZeroOne(w_SGD, testX, testY)
 
 print("Problem 4 & 5:")
 print("Fixed rate Gradient Descent")
